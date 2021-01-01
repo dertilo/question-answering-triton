@@ -20,6 +20,7 @@
         
 
 ##3. Triton Serving
+* compared to TorchServe ? 
 * [quick-start](https://github.com/triton-inference-server/server/blob/r20.12/docs/quickstart.md)
     * [docker-images](https://ngc.nvidia.com/catalog/containers/nvidia:tritonserver)
         * `can also work on CPU-only systems. In both cases you can use the same Triton Docker image`
@@ -32,5 +33,13 @@ docker run --rm -p8000:8000 -p8001:8001 -p8002:8002 -v $MODEL_PATH:/models nvcr.
 curl -v localhost:8000/v2/health/ready
 # Client
 docker run -it --rm --net=host nvcr.io/nvidia/tritonserver:20.12-py3-sdk
+./install/bin/image_client -m densenet_onnx -c 3 -s INCEPTION /workspace/images/mug.jpg
 ```
-* [dynamic batcher](https://github.com/triton-inference-server/server/blob/r20.12/docs/model_configuration.md#dynamic-batcher)
+### Questions / TODO
+* `HTTP/REST` vs `GRPC` ? 
+* `GRPC generated library (generated stub)` vs `client library`
+* why/when would one want batching in the client?
+    * [salesforce](https://blog.einstein.ai/benchmarking-tensorrt-inference-server/) says: 
+        `Static batching, i.e., client-side batching, does not significantly improve throughput or latency when dynamic batching is employed. This obviates the need for explicit batching outside of the inference server` -> no need for client-side batching!
+    * see [dynamic batcher](https://github.com/triton-inference-server/server/blob/r20.12/docs/model_configuration.md#dynamic-batcher)
+* why/when async / streaming in client?
