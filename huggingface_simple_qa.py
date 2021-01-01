@@ -2,6 +2,8 @@
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering
 import torch
 
+from httprest_client import HttpTritonClient
+
 
 def get_sample_context_questions():
     text = r"""
@@ -35,14 +37,18 @@ if __name__ == "__main__":
     model = AutoModelForQuestionAnswering.from_pretrained(model_name)
     text, questions = get_sample_context_questions()
 
-    for question in questions:
-        inputs = tokenizer(question, text, add_special_tokens=True, return_tensors="pt")
-        input_ids = inputs["input_ids"].tolist()[0]
-        # text_tokens = tokenizer.convert_ids_to_tokens(input_ids)
-        outputs = model(**inputs)
-        answer_start,answer_end = get_start_end(outputs)
-        answer = tokenizer.convert_tokens_to_string(
-            tokenizer.convert_ids_to_tokens(input_ids[answer_start:answer_end])
-        )
-        print(f"Question: {question}")
-        print(f"Answer: {answer}")
+    model_name = "deepset_bert_base_cased_squad2"
+    with HttpTritonClient(model_name) as client:
+
+        for question in questions:
+            inputs = tokenizer(question, text, add_special_tokens=True, return_tensors="pt")
+            input_ids = inputs["input_ids"].tolist()[0]
+            # text_tokens = tokenizer.convert_ids_to_tokens(input_ids)
+            inputs_numpy = {k:x.numpy() for k,x in inputs.items()}
+            outputs = client(inputs_numpy)
+            answer_start,answer_end = get_start_end(outputs)
+            answer = tokenizer.convert_tokens_to_string(
+                tokenizer.convert_ids_to_tokens(input_ids[answer_start:answer_end])
+            )
+            print(f"Question: {question}")
+            print(f"Answer: {answer}")
