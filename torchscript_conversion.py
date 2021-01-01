@@ -53,20 +53,19 @@ def remove_double_quotes(s):
     return s.replace('"', "").replace("'", '"')
 
 
-def generate_config_pbtxt(
-    model_name, inputs, outputs, dir: str, platform="pytorch_libtorch"
-):
+def generate_config_pbtxt(inputs, outputs, dir: str, platform="pytorch_libtorch"):
+    model_name = dir.split("/")[-1]
     inputs_s = build_variables(inputs, is_input=True)
     outputs_s = build_variables(outputs, is_input=False)
 
-    config_pbtxt = f"""name: {model_name}
-    platform: {platform}
-    input {remove_double_quotes(json.dumps(inputs_s, indent=4))}
-    output {remove_double_quotes(json.dumps(outputs_s, indent=4))}
+    text = f"""name: '{model_name}'
+    platform: '{platform}'
+    input {json.dumps(inputs_s, indent=4)}
+    output {json.dumps(outputs_s, indent=4)}
         """
 
     with open(f"{dir}/config.pbtxt", "w") as f:
-        f.write(config_pbtxt)
+        f.write(remove_double_quotes(text))
 
 
 def repack(tuples: List[Tuple]) -> List[List]:
@@ -90,10 +89,10 @@ if __name__ == "__main__":
     model_repo = f"/home/tilo/code/ML/triton-server/docs/examples/model_repository"
     model_folder = model_name.replace("/", "_").replace("-", "_")
     model_dir = f"{model_repo}/{model_folder}"
-    os.makedirs(model_dir,exist_ok=True)
-    generate_config_pbtxt(model_name, input_vars, output_vars, model_dir)
+    os.makedirs(model_dir, exist_ok=True)
+    generate_config_pbtxt(input_vars, output_vars, model_dir)
     model_save_dir = f"{model_dir}/1"
-    os.makedirs(model_save_dir,exist_ok=True)
+    os.makedirs(model_save_dir, exist_ok=True)
 
     pt_model = WrappedModel(model, input_names, output_names).eval()
     traced_script_module = torch.jit.trace(
