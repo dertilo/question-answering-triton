@@ -1,5 +1,9 @@
 # stolen from: https://blog.einstein.ai/benchmarking-tensorrt-inference-server/
 # see: https://gist.githubusercontent.com/keskarnitish/1061cbd101ab186e2d80c7877517e7ee/raw/887a8a64ea6e77787bb0b4fbf2db542b282d5c07/saved_pytorch_model.py
+import os
+
+import json
+
 from typing import List, Tuple
 
 import torch
@@ -30,6 +34,45 @@ class WrappedModel(torch.nn.Module):
         )  # WTF! why does torchscript-trace only accept tuples!?
 
 
+DATA_TYPES = {"torch.FloatTensor": "TYPE_FP32", "torch.LongTensor": "TYPE_INT32"}
+
+
+def build_variables(variables: List[torch.Tensor], is_input=True):
+    in_out = "input" if is_input else "output"
+    return [
+        {
+            "name": f"'{in_out}__{k}'",
+            "data_type": DATA_TYPES[x.type()],
+            "dims": list(x.size()),
+        }
+        for k, x in enumerate(variables)
+    ]
+
+
+def remove_double_quotes(s):
+    return s.replace('"', "").replace("'", '"')
+
+
+def generate_config_pbtxt(
+    model_name, inputs, outputs, dir: str, platform="pytorch_libtorch"
+):
+    inputs_s = build_variables(inputs, is_input=True)
+    outputs_s = build_variables(outputs, is_input=False)
+
+    config_pbtxt = f"""name: {model_name}
+    platform: {platform}
+    input {remove_double_quotes(json.dumps(inputs_s, indent=4))}
+    output {remove_double_quotes(json.dumps(outputs_s, indent=4))}
+        """
+
+    with open(f"{dir}/config.pbtxt", "w") as f:
+        f.write(config_pbtxt)
+
+
+def repack(tuples: List[Tuple]) -> List[List]:
+    return [list(x) for x in zip(*tuples)]
+
+
 if __name__ == "__main__":
 
     model_name = "deepset/bert-base-cased-squad2"
@@ -40,11 +83,20 @@ if __name__ == "__main__":
 
     inputs = tokenizer(questions[0], text, add_special_tokens=True, return_tensors="pt")
     output = model(**inputs)
-    out_names = output.keys()
-    named_args = list(inputs.items())
-    in_names = [n for n, _ in named_args]
-    pt_model = WrappedModel(model, in_names, out_names).eval()
+
+    input_names, input_vars = repack(inputs.items())
+    output_names, output_vars = repack(output.items())
+
+    model_repo = f"/home/tilo/code/ML/triton-server/docs/examples/model_repository"
+    model_folder = model_name.replace("/", "_").replace("-", "_")
+    model_dir = f"{model_repo}/{model_folder}"
+    os.makedirs(model_dir,exist_ok=True)
+    generate_config_pbtxt(model_name, input_vars, output_vars, model_dir)
+    model_save_dir = f"{model_dir}/1"
+    os.makedirs(model_save_dir,exist_ok=True)
+
+    pt_model = WrappedModel(model, input_names, output_names).eval()
     traced_script_module = torch.jit.trace(
-        pt_model, tuple(t for _, t in named_args)
+        pt_model, tuple(input_vars)
     )  # WTF! why does torchscript-trace only accept tuples!?
-    traced_script_module.save("model.pt")
+    traced_script_module.save(f"{model_save_dir}/model.pt")
