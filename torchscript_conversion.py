@@ -22,7 +22,7 @@ class WrappedModel(torch.nn.Module):
         self.use_gpu = use_gpu
         self.model = self.__to_cuda(model)
 
-    def __to_cuda(self, x):
+    def __to_cuda(self, x): #TODO(tilo): why is this necessary?
         return x.cuda() if self.use_gpu else x
 
     def forward(self, *inputs):
@@ -34,7 +34,7 @@ class WrappedModel(torch.nn.Module):
         )  # WTF! why does torchscript-trace only accept tuples!?
 
 
-DATA_TYPES = {"torch.FloatTensor": "TYPE_FP32", "torch.LongTensor": "TYPE_INT32"}
+DATA_TYPES = {"torch.FloatTensor": "TYPE_FP32", "torch.LongTensor": "TYPE_INT64"}
 
 
 def build_variables(variables: List[torch.Tensor], is_input=True):
@@ -54,6 +54,7 @@ def remove_double_quotes(s):
 
 
 def generate_config_pbtxt(inputs, outputs, dir: str, platform="pytorch_libtorch"):
+    # to stuff meta-data in config.pbtxt see https://github.com/triton-inference-server/server/issues/439
     model_name = dir.split("/")[-1]
     inputs_s = build_variables(inputs, is_input=True)
     outputs_s = build_variables(outputs, is_input=False)
