@@ -1,4 +1,6 @@
 # stolen from https://huggingface.co/transformers/task_summary.html#question-answering
+from typing import Dict
+import numpy as np
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering
 import torch
 
@@ -20,13 +22,13 @@ def get_sample_context_questions():
     return text, questions
 
 
-def get_start_end(outputs):
-    answer_start_scores = outputs.start_logits
-    answer_end_scores = outputs.end_logits
+def get_start_end(outputs:Dict):
+    answer_start_scores = outputs["output_0"]
+    answer_end_scores = outputs["output_1"]
     # Get the most likely beginning of answer with the argmax of the score
-    answer_start = torch.argmax(answer_start_scores)
+    answer_start = np.argmax(answer_start_scores)
     # Get the most likely end of answer with the argmax of the score
-    answer_end = torch.argmax(answer_end_scores) + 1
+    answer_end = np.argmax(answer_end_scores) + 1
     return answer_start, answer_end
 
 
@@ -34,10 +36,10 @@ if __name__ == "__main__":
 
     model_name = "deepset/bert-base-cased-squad2"
     tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForQuestionAnswering.from_pretrained(model_name)
+    # model = AutoModelForQuestionAnswering.from_pretrained(model_name)
     text, questions = get_sample_context_questions()
 
-    model_name = "deepset_bert_base_cased_squad2"
+    model_name = "bert-base-cased-squad2"
     with HttpTritonClient(model_name) as client:
 
         for question in questions:
