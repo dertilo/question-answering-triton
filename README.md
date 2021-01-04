@@ -22,7 +22,7 @@
 FULL_PATH_TO_MODEL_REPO=some_path
 MODEL_NAME='deepset/bert-base-cased-squad2'
 MODEL_FOLDER=$(echo $MODEL_NAME | tr '/' '-')
-python convert_graph_to_onnx.py --framework pt --pipeline question-answering --model "$MODEL_NAME" $FULL_PATH_TO_MODEL_REPO/model_repository_new/$MODEL_FOLDER/1/model.onnx
+python convert_graph_to_onnx.py --framework pt --pipeline question-answering --model "$MODEL_NAME" $FULL_PATH_TO_MODEL_REPO/model_repository/$MODEL_FOLDER/1/model.onnx
 ```
 2. setup triton-server
 ```shell
@@ -50,9 +50,9 @@ Answer: TensorFlow 2. 0 and PyTorch
 ```
 
 # more details notes (no need to read)
-##1. SQUAD-type QA Inferencer based on huggingface transformers
+## 1. SQUAD-type QA Inferencer based on huggingface transformers
 * pretrained [bert-base-cased-squad2](https://huggingface.co/deepset/bert-base-cased-squad2) by huggingface + deepset
-##2. Converting to some optimized format
+## 2. Converting to some optimized format
 * ONNX vs. TorchScript+TRTorch? 
 * [torch2trt](https://github.com/NVIDIA-AI-IOT/torch2trt) directly converts pytorch to TensorRT
 
@@ -78,7 +78,7 @@ python convert_graph_to_onnx.py --framework pt --pipeline question-answering --m
     * more low level than `2.` ?
         
 
-##3. Triton Serving
+## 3. Triton Serving
 * compared to TorchServe ? 
 * [quick-start](https://github.com/triton-inference-server/server/blob/r20.12/docs/quickstart.md)
     * [docker-images](https://ngc.nvidia.com/catalog/containers/nvidia:tritonserver)
