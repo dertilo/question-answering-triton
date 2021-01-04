@@ -8,7 +8,7 @@
 
 ### deploying models to [Triton](https://developer.nvidia.com/nvidia-triton-inference-server)
 * triton supports multiple model-formats (implements corresponding [backends](https://github.com/triton-inference-server/backend/blob/main/README.md#backends)) like: TensorFlow, TensorRT, PyTorch, ONNX, ...
-* models can be converted/compiled to more compute-optimized formats (trade-off between flexibility and performance) in order to make use of "faster" [backends](https://github.com/triton-inference-server/backend/blob/main/README.md#backends)
+* models can be converted/compiled to more compute-optimized formats (trade-off between flexibility and performance), to make use of "faster" [backends](https://github.com/triton-inference-server/backend/blob/main/README.md#backends)
   
 1. clean + pytorchic way:
     1. use [torch-script](https://pytorch.org/docs/stable/jit.html) to convert pytorch-model 
@@ -46,8 +46,8 @@ Question: What does 🤗 Transformers provide?
 Answer: general - purpose architectures
 Question: 🤗 Transformers provides interoperability between which frameworks?
 Answer: TensorFlow 2. 0 and PyTorch
-
 ```
+4. for deployment to specific GPU-hardware: use [onnx-tensorrt](https://github.com/onnx/onnx-tensorrt) 
 
 # more details notes (no need to read)
 ## 1. SQUAD-type QA Inferencer based on huggingface transformers
