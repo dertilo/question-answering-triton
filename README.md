@@ -16,8 +16,38 @@
 2. huggingface's way is to use [ONNX](https://huggingface.co/transformers/serialization.html); they even provide a [conversion-script](https://github.com/huggingface/transformers/blob/master/src/transformers/convert_graph_to_onnx.py)
 
 ### quick start
+0. create environment + install requirements: `pip install -r requirements.txt`
+1. convert pretrained model to ONNX (substitue `MODEL_NAME` with any model found on https://huggingface.co/models)
+```shell
+FULL_PATH_TO_MODEL_REPO=some_path
+MODEL_NAME='deepset/bert-base-cased-squad2'
+MODEL_FOLDER=$(echo $MODEL_NAME | tr '/' '-')
+python convert_graph_to_onnx.py --framework pt --pipeline question-answering --model "$MODEL_NAME" $FULL_PATH_TO_MODEL_REPO/model_repository_new/$MODEL_FOLDER/1/model.onnx
+```
+2. setup triton-server
+```shell
+MODEL_PATH=$FULL_PATH_TO_MODEL_REPO/model_repository
+docker run --rm -p8000:8000 -p8001:8001 -p8002:8002 -v $MODEL_PATH:/models nvcr.io/nvidia/tritonserver:20.12-py3 tritonserver --model-repository=/models # change version "20.12" to whichever wanted
+```
+* if successful triton prints something like this 
+```shell
++-----------------------------------------+---------+--------+
+| Model                                   | Version | Status |
++-----------------------------------------+---------+--------+
+| bert-base-cased-squad2                  | 1       | READY  |
+```
+3. run exemplary python script: [huggingface_simple_qa.py](huggingface_simple_qa.py)
+```shell
+python huggingface_simple_qa.py
+# should output the following
+Question: How many pretrained models are available in 🤗 Transformers?
+Answer: over 32 +
+Question: What does 🤗 Transformers provide?
+Answer: general - purpose architectures
+Question: 🤗 Transformers provides interoperability between which frameworks?
+Answer: TensorFlow 2. 0 and PyTorch
 
-
+```
 
 # more details notes (no need to read)
 ##1. SQUAD-type QA Inferencer based on huggingface transformers

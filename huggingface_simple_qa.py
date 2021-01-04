@@ -1,4 +1,6 @@
 # stolen from https://huggingface.co/transformers/task_summary.html#question-answering
+import os
+
 from typing import Dict
 import numpy as np
 from transformers import AutoTokenizer, AutoModelForQuestionAnswering
@@ -33,14 +35,13 @@ def get_start_end(outputs:Dict):
 
 
 if __name__ == "__main__":
-
-    model_name = "deepset/bert-base-cased-squad2"
+    model_name = os.environ.get("MODEL_NAME", "deepset/bert-base-cased-squad2")
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     # model = AutoModelForQuestionAnswering.from_pretrained(model_name)
     text, questions = get_sample_context_questions()
 
-    model_name = "bert-base-cased-squad2"
-    with HttpTritonClient(model_name) as client:
+    triton_model_name = os.environ.get("MODEL_FOLDER","bert-base-cased-squad2")
+    with HttpTritonClient(triton_model_name) as client:
 
         for question in questions:
             inputs = tokenizer(question, text, add_special_tokens=True, return_tensors="pt")
